@@ -20,10 +20,40 @@ This project aims to:
 
 ## 🛠 Tech Stack
 
-- **Language:** Python 3.x  
+- **Language:** Python 3.11  
 - **Computer Vision:** MediaPipe, OpenCV  
 - **Data Science:** Pandas (logging), NumPy (kinematics)  
 - **Version Control:** Git  
+
+---
+
+## ▶️ How to Run the Project
+
+This project includes a basic `main.py` script that launches a MediaPipe pose‑tracking pipeline using your webcam.
+
+### **1. Clone the repository**
+```bash
+git clone https://github.com/ymodak25/tkd-drift-analyzer.git
+cd tkd-drift-analyzer
+```
+
+### **2. Create and activate a virtual environment**
+```bash
+python3.11 -m venv venv
+source venv/bin/activate
+```
+
+### **3. Install dependencies**
+```bash
+pip install -r requirements.txt
+```
+
+### **4. Run the webcam tracker**
+```bash
+python3.11 main.py
+```
+
+This will open a live MediaPipe pose‑tracking window using your default webcam.
 
 ---
 
