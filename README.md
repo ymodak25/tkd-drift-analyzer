@@ -1,4 +1,3 @@
-```markdown
 # 🥋📉 tkd-drift-analyzer
 ### Quantifying Biomechanical Performance Decay         qin Martial Arts
 
