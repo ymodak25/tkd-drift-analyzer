@@ -1,5 +1,6 @@
+```markdown
 # 🥋📉 tkd-drift-analyzer
-### Quantifying Biomechanical Performance Decay in Martial Arts
+### Quantifying Biomechanical Performance Decay         qin Martial Arts
 
 **tkd-drift-analyzer** is a computer‑vision research tool designed to measure **Technical Drift** — the measurable deviation from “perfect form” caused by physical exhaustion.  
 Using **MediaPipe** for pose estimation and **NumPy** for kinematic analysis, the system computes an objective **Drift Score** by comparing a baseline performance to a fatigued performance.
@@ -29,31 +30,41 @@ This project aims to:
 
 ## ▶️ How to Run the Project
 
-This project includes a basic `main.py` script that launches a MediaPipe pose‑tracking pipeline using your webcam.
+This project includes a `main.py` script that supports both live webcam tracking and pre-recorded video file analysis.
 
 ### **1. Clone the repository**
 ```bash
-git clone https://github.com/ymodak25/tkd-drift-analyzer.git
+git clone [https://github.com/ymodak25/tkd-drift-analyzer.git](https://github.com/ymodak25/tkd-drift-analyzer.git)
 cd tkd-drift-analyzer
+
 ```
 
 ### **2. Create and activate a virtual environment**
+
 ```bash
 python3.11 -m venv venv
 source venv/bin/activate
+
 ```
 
 ### **3. Install dependencies**
+
 ```bash
 pip install -r requirements.txt
+
 ```
 
-### **4. Run the webcam tracker**
+### **4. Run the Analyzer**
+
 ```bash
 python3.11 main.py
+
 ```
 
-This will open a live MediaPipe pose‑tracking window using your default webcam.
+Upon launch, the program will prompt you to:
+
+* **Enter a file path** (e.g., `videos/baseline.mp4`) to analyze a recorded session.
+* **Press Enter** to launch the tracker using your default webcam.
 
 ---
 
@@ -61,11 +72,11 @@ This will open a live MediaPipe pose‑tracking window using your default webcam
 
 The analyzer extracts three primary signals to calculate drift:
 
-| Metric             | Calculation                 | Significance                                      |
-|--------------------|-----------------------------|---------------------------------------------------|
-| Terminal Velocity  | Δ Distance / Δ Time         | Measures “snap” and power generation.             |
-| Extension Angle    | Law of Cosines (H-K-A)      | Detects if the student is short‑changing kicks.   |
-| Stability Variance | Std. Dev. of Center of Mass | Measures balance degradation under stress.        |
+| Metric | Calculation | Significance |
+| --- | --- | --- |
+| Terminal Velocity | Δ Distance / Δ Time | Measures “snap” and power generation. |
+| Extension Angle | Law of Cosines (H-K-A) | Detects if the student is short‑changing kicks. |
+| Stability Variance | Std. Dev. of Center of Mass | Measures balance degradation under stress. |
 
 ---
 
@@ -73,14 +84,11 @@ The analyzer extracts three primary signals to calculate drift:
 
 The system operates through a multi‑stage pipeline designed to minimize human bias:
 
-### 1. **Baseline Ingestion**  
-User provides a video of standardized movements performed in a peak‑energy state to establish “Gold Standard” coordinates.
+### 1. **Baseline Ingestion** User provides a video (or live feed) of standardized movements performed in a peak‑energy state to establish “Gold Standard” coordinates.
 
-### 2. **Fatigue Ingestion**  
-User provides a second video of the same movements performed after a controlled training load.
+### 2. **Fatigue Ingestion** User provides a second video/feed of the same movements performed after a controlled training load.
 
-### 3. **Automated Feature Extraction**  
-The script processes both streams, extracting high‑frequency spatial data and logging performance metrics into structured files.
+### 3. **Automated Feature Extraction** The script processes the input, extracting high‑frequency spatial data via MediaPipe and logging performance metrics into structured files.
 
-### 4. **Drift Comparison**  
-A comparative module calculates the variance between the two logs, outputting a **Drift Coefficient** representing percentage performance decay.
+### 4. **Drift Comparison** A comparative module calculates the variance between the two logs, outputting a **Drift Coefficient** representing percentage performance decay.
+

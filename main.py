@@ -5,7 +5,13 @@ mp_pose = mp.solutions.pose
 pose = mp_pose.Pose()
 mp_draw = mp.solutions.drawing_utils
 
-cap = cv2.VideoCapture(0)  # Opens the default webcam
+# --- NEW: Ask for video file path ---
+video_path = input("Enter a video file path, or press Enter to use webcam: ").strip()
+
+if video_path:
+    cap = cv2.VideoCapture(video_path)
+else:
+    cap = cv2.VideoCapture(0)  # default webcam
 
 print("Press 'q' to quit the test.")
 
@@ -27,7 +33,9 @@ while cap.isOpened():
 
     cv2.imshow("Environment Check - The Dan Gap", frame)
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    # For video files, slow down playback to real-time
+    key = cv2.waitKey(1 if not video_path else 30) & 0xFF
+    if key == ord('q'):
         break
 
 cap.release()
