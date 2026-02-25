@@ -1,0 +1,17 @@
+.idea/
+.vscode/
+
+output_landmarks.csv
+output_landmarks_small.csv
+
+*.mp4
+*.mov
+*.avi
+
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv
+
+.DS_Store
