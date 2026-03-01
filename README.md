@@ -1,5 +1,5 @@
 # 🥋📉 tkd-drift-analyzer
-### Quantifying Biomechanical Performance Decay         qin Martial Arts
+### Quantifying Biomechanical Performance Decay         in Martial Arts
 
 **tkd-drift-analyzer** is a computer‑vision research tool designed to measure **Technical Drift** — the measurable deviation from “perfect form” caused by physical exhaustion.  
 Using **MediaPipe** for pose estimation and **NumPy** for kinematic analysis, the system computes an objective **Drift Score** by comparing a baseline performance to a fatigued performance.
@@ -89,5 +89,19 @@ The system operates through a multi‑stage pipeline designed to minimize human 
 
 ### 3. **Automated Feature Extraction** The script processes the input, extracting high‑frequency spatial data via MediaPipe and logging performance metrics into structured files.
 
-### 4. **Drift Comparison** A comparative module calculates the variance between the two logs, outputting a **Drift Coefficient** representing percentage performance decay.
+### 4. **Drift Comparison** A comparative module calculates the variance between the two logs, outputting a **Drift Coefficient** representing percentage performance decay
+---
 
+## 🗂️ tkd-drift-analyzer Change-Log
+
+### January - 2026
+- I had an idea to do some research in the two fields that I love using computer vision (TaeKwonDo & Computer Science)
+- Created a python program to do basic video and motion tracking.
+- Used mediapipe to track joints of the body
+
+---
+
+### February - 2026
+- Added ability to track motion through video files additional to the webcam.
+
+---
