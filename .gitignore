@@ -4,7 +4,7 @@
 output_landmarks.csv
 output_landmarks_small.csv
 
-*.mp4
+
 *.mov
 *.avi
 

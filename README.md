@@ -29,13 +29,12 @@ This project aims to:
 
 ## ▶️ How to Run the Project
 
-This project includes a `main.py` script that supports both live webcam tracking and pre-recorded video file analysis.
+This project includes a `main.py` script which now operates as a **command-line comparator**. When you supply two recorded video files, the program automatically converts them to angle CSV logs and produces a **Similarity Score** reflecting how closely the two performances match.
 
 ### **1. Clone the repository**
 ```bash
 git clone [https://github.com/ymodak25/tkd-drift-analyzer.git](https://github.com/ymodak25/tkd-drift-analyzer.git)
 cd tkd-drift-analyzer
-
 ```
 
 ### **2. Create and activate a virtual environment**
@@ -43,27 +42,35 @@ cd tkd-drift-analyzer
 ```bash
 python3.11 -m venv venv
 source venv/bin/activate
-
 ```
 
 ### **3. Install dependencies**
 
 ```bash
 pip install -r requirements.txt
-
 ```
 
 ### **4. Run the Analyzer**
 
-```bash
-python3.11 main.py
+Provide two video file paths as positional arguments:
 
+```bash
+python3.11 main.py <video1.mp4> <video2.mp4>
 ```
 
-Upon launch, the program will prompt you to:
+The script will:
 
-* **Enter a file path** (e.g., `videos/baseline.mp4`) to analyze a recorded session.
-* **Press Enter** to launch the tracker using your default webcam.
+* process each MP4 with MediaPipe and write `angles_1.csv` and `angles_2.csv` to the working directory
+* compare the angle data frame‑by‑frame
+* print a similarity score on a 0–100 scale
+
+Example:
+
+```bash
+python3.11 main.py videos/baseline.mp4 videos/fatigued.mp4
+```
+
+> **Tip:** you can inspect or re‑use the generated CSV files later, or call `compare_angle_csvs()` directly from other Python code. Legacy webcam/live‑tracking mode has been removed in favor of the batch comparison workflow.
 
 ---
 
@@ -76,6 +83,7 @@ The analyzer extracts three primary signals to calculate drift:
 | Terminal Velocity | Δ Distance / Δ Time | Measures “snap” and power generation. |
 | Extension Angle | Law of Cosines (H-K-A) | Detects if the student is short‑changing kicks. |
 | Stability Variance | Std. Dev. of Center of Mass | Measures balance degradation under stress. |
+| **Similarity Score** | 100 - Mean Absolute Error of corresponding angles | Indicates how closely two video sessions match; higher means more similar. |
 
 ---
 
@@ -89,7 +97,7 @@ The system operates through a multi‑stage pipeline designed to minimize human 
 
 ### 3. **Automated Feature Extraction** The script processes the input, extracting high‑frequency spatial data via MediaPipe and logging performance metrics into structured files.
 
-### 4. **Drift Comparison** A comparative module calculates the variance between the two logs, outputting a **Drift Coefficient** representing percentage performance decay
+### 4. **Drift Comparison / Similarity** A comparative module calculates the frame‑by‑frame variance between the two generated logs and converts it into a **Similarity Score** (0–100) rather than a raw percentage decay. A higher score means the performances are more alike.
 ---
 
 ## 🗂️ tkd-drift-analyzer Change-Log
@@ -103,5 +111,12 @@ The system operates through a multi‑stage pipeline designed to minimize human 
 
 ### February - 2026
 - Added ability to track motion through video files additional to the webcam.
+
+---
+
+### March - 2026
+- Implemented CLI mode: comparing two MP4 recordings.
+- Videos are auto‑converted to `angles_*.csv`; a similarity score (0‑100) is computed from mean joint-angle error.
+- Removed legacy webcam/live tracking; workflow now focuses on pairwise video comparison.
 
 ---

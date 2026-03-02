@@ -1,141 +1,117 @@
+import sys
 import cv2
 import mediapipe as mp
-import csv
 import numpy as np
+import csv
+import os
 
 mp_pose = mp.solutions.pose
-pose = mp_pose.Pose()
-mp_draw = mp.solutions.drawing_utils
 
-# -----------------------------
-# LANDMARK EXTRACTION
-# -----------------------------
+# ----------------------------------------
+# EXTRACT LANDMARKS
+# ----------------------------------------
 def extract_landmarks(results):
     if not results.pose_landmarks:
         return None
-    landmarks = []
+    pts = []
     for lm in results.pose_landmarks.landmark:
-        landmarks.extend([lm.x, lm.y, lm.z])
-    return landmarks
+        pts.extend([lm.x, lm.y, lm.z])
+    return pts
 
-# -----------------------------
-# SAVE LANDMARKS TO CSV
-# -----------------------------
-def save_to_csv(csv_writer, frame_idx, landmarks):
-    row = [frame_idx] + landmarks
-    csv_writer.writerow(row)
-
-# -----------------------------
-# ANGLE CALCULATION
-# -----------------------------
+# ----------------------------------------
+# CALCULATE ANGLE
+# ----------------------------------------
 def calculate_angle(a, b, c):
-    a = np.array(a)
-    b = np.array(b)
-    c = np.array(c)
-
+    a, b, c = np.array(a), np.array(b), np.array(c)
     ba = a - b
     bc = c - b
-
     cosine = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-6)
-    angle = np.degrees(np.arccos(np.clip(cosine, -1.0, 1.0)))
-    return angle
+    return np.degrees(np.arccos(np.clip(cosine, -1.0, 1.0)))
 
-POSE_LANDMARKS = mp_pose.PoseLandmark
-
-# -----------------------------
-# ANGLES FROM LANDMARK VECTOR
-# -----------------------------
+# ----------------------------------------
+# GET ANGLES FROM LANDMARK VECTOR
+# ----------------------------------------
 def get_angles_from_landmarks(landmarks):
     pts = [(landmarks[i], landmarks[i+1], landmarks[i+2]) for i in range(0, len(landmarks), 3)]
-    angles = {}
+    lm = mp_pose.PoseLandmark
 
-    angles["right_elbow"] = calculate_angle(
-        pts[POSE_LANDMARKS.RIGHT_SHOULDER.value],
-        pts[POSE_LANDMARKS.RIGHT_ELBOW.value],
-        pts[POSE_LANDMARKS.RIGHT_WRIST.value]
-    )
-
-    angles["left_elbow"] = calculate_angle(
-        pts[POSE_LANDMARKS.LEFT_SHOULDER.value],
-        pts[POSE_LANDMARKS.LEFT_ELBOW.value],
-        pts[POSE_LANDMARKS.LEFT_WRIST.value]
-    )
-
-    angles["right_knee"] = calculate_angle(
-        pts[POSE_LANDMARKS.RIGHT_HIP.value],
-        pts[POSE_LANDMARKS.RIGHT_KNEE.value],
-        pts[POSE_LANDMARKS.RIGHT_ANKLE.value]
-    )
-
-    angles["left_knee"] = calculate_angle(
-        pts[POSE_LANDMARKS.LEFT_HIP.value],
-        pts[POSE_LANDMARKS.LEFT_KNEE.value],
-        pts[POSE_LANDMARKS.LEFT_ANKLE.value]
-    )
+    angles = {
+        "right_elbow": calculate_angle(pts[lm.RIGHT_SHOULDER.value], pts[lm.RIGHT_ELBOW.value], pts[lm.RIGHT_WRIST.value]),
+        "left_elbow": calculate_angle(pts[lm.LEFT_SHOULDER.value], pts[lm.LEFT_ELBOW.value], pts[lm.LEFT_WRIST.value]),
+        "right_knee": calculate_angle(pts[lm.RIGHT_HIP.value], pts[lm.RIGHT_KNEE.value], pts[lm.RIGHT_ANKLE.value]),
+        "left_knee": calculate_angle(pts[lm.LEFT_HIP.value], pts[lm.LEFT_KNEE.value], pts[lm.LEFT_ANKLE.value]),
+    }
 
     return angles
 
-# -----------------------------
-# COMPARE TWO CSV FILES
-# -----------------------------
-def compare_csvs(csv1, csv2):
+# ----------------------------------------
+# PROCESS VIDEO → ANGLE CSV
+# ----------------------------------------
+def process_video_to_angle_csv(video_path, output_csv):
+    pose = mp_pose.Pose()
+    cap = cv2.VideoCapture(video_path)
+
+    with open(output_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["frame", "right_elbow", "left_elbow", "right_knee", "left_knee"])
+
+        frame_idx = 0
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+            landmarks = extract_landmarks(results)
+
+            if landmarks:
+                angles = get_angles_from_landmarks(landmarks)
+                writer.writerow([frame_idx] + list(angles.values()))
+
+            frame_idx += 1
+
+    cap.release()
+    return output_csv
+
+# ----------------------------------------
+# COMPARE TWO ANGLE CSV FILES
+# ----------------------------------------
+def compare_angle_csvs(csv1, csv2):
     data1 = np.loadtxt(csv1, delimiter=",", skiprows=1)
     data2 = np.loadtxt(csv2, delimiter=",", skiprows=1)
 
     min_len = min(len(data1), len(data2))
-    data1 = data1[:min_len]
-    data2 = data2[:min_len]
+    data1 = data1[:min_len, 1:]
+    data2 = data2[:min_len, 1:]
 
-    diff = np.abs(data1[:, 1:] - data2[:, 1:])
+    diff = np.abs(data1 - data2)
     mae = np.mean(diff)
 
-    score = max(0, 100 - mae * 10)
+    score = max(0, 100 - mae)
     return score
 
-# -----------------------------
-# MAIN VIDEO PROCESSING
-# -----------------------------
-video_path = input("Enter a video file path, or press Enter to use webcam: ").strip()
+# ----------------------------------------
+# MAIN (TERMINAL ARGUMENT MODE)
+# ----------------------------------------
+def main():
+    if len(sys.argv) != 3:
+        print("Usage: python3 main.py <video1.mp4> <video2.mp4>")
+        sys.exit(1)
 
-if video_path:
-    cap = cv2.VideoCapture(video_path)
-else:
-    cap = cv2.VideoCapture(0)
+    video1 = sys.argv[1]
+    video2 = sys.argv[2]
 
-print("Press 'q' to quit the test.")
+    print("\nProcessing videos...")
+    csv1 = "angles_1.csv"
+    csv2 = "angles_2.csv"
 
-csv_file = open("output_landmarks.csv", "w", newline="")
-csv_writer = csv.writer(csv_file)
-csv_writer.writerow(["frame"] + [f"lm{i}" for i in range(99)])
+    process_video_to_angle_csv(video1, csv1)
+    process_video_to_angle_csv(video2, csv2)
 
-frame_idx = 0
+    print("Comparing angle data...")
+    score = compare_angle_csvs(csv1, csv2)
 
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
+    print(f"\nSimilarity Score: {score:.2f}/100\n")
 
-    results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-
-    if results.pose_landmarks:
-        mp_draw.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-        landmarks = extract_landmarks(results)
-        if landmarks:
-            save_to_csv(csv_writer, frame_idx, landmarks)
-
-            # Optional: compute angles live
-            # angles = get_angles_from_landmarks(landmarks)
-            # print(angles)
-
-    cv2.imshow("Environment Check - The Dan Gap", frame)
-
-    key = cv2.waitKey(1 if not video_path else 30) & 0xFF
-    if key == ord('q'):
-        break
-
-    frame_idx += 1
-
-csv_file.close()
-cap.release()
-cv2.destroyAllWindows()
+if __name__ == "__main__":
+    main()
