@@ -4,6 +4,8 @@ import mediapipe as mp
 import numpy as np
 import csv
 import os
+import subprocess
+import tempfile
 
 mp_pose = mp.solutions.pose
 
@@ -45,32 +47,81 @@ def get_angles_from_landmarks(landmarks):
     return angles
 
 # ----------------------------------------
+# VIDEO SUPPORT
+# ----------------------------------------
+def convert_mov_to_mp4(mov_path):
+    temp_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+            temp_path = tmp.name
+
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", mov_path, "-c:v", "libx264", "-preset", "ultrafast", "-c:a", "aac", temp_path],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True,
+        )
+        return temp_path
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+        return None
+
+
+def open_video_capture(video_path):
+    cap = cv2.VideoCapture(video_path)
+    if cap.isOpened():
+        return cap, None
+
+    if video_path.lower().endswith(".mov"):
+        temp_path = convert_mov_to_mp4(video_path)
+        if temp_path:
+            cap = cv2.VideoCapture(temp_path)
+            if cap.isOpened():
+                return cap, temp_path
+
+    return cap, None
+
+# ----------------------------------------
 # PROCESS VIDEO → ANGLE CSV
 # ----------------------------------------
 def process_video_to_angle_csv(video_path, output_csv):
     pose = mp_pose.Pose()
-    cap = cv2.VideoCapture(video_path)
+    cap, temp_path = open_video_capture(video_path)
 
-    with open(output_csv, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["frame", "right_elbow", "left_elbow", "right_knee", "left_knee"])
+    if not cap.isOpened():
+        raise ValueError(f"Cannot open video file: {video_path}")
 
-        frame_idx = 0
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+    try:
+        with open(output_csv, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["frame", "right_elbow", "left_elbow", "right_knee", "left_knee"])
 
-            results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-            landmarks = extract_landmarks(results)
+            frame_idx = 0
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-            if landmarks:
-                angles = get_angles_from_landmarks(landmarks)
-                writer.writerow([frame_idx] + list(angles.values()))
+                results = pose.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+                landmarks = extract_landmarks(results)
 
-            frame_idx += 1
+                if landmarks:
+                    angles = get_angles_from_landmarks(landmarks)
+                    writer.writerow([frame_idx] + list(angles.values()))
 
-    cap.release()
+                frame_idx += 1
+    finally:
+        cap.release()
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
     return output_csv
 
 # ----------------------------------------
@@ -95,23 +146,42 @@ def compare_angle_csvs(csv1, csv2):
 # ----------------------------------------
 def main():
     if len(sys.argv) != 3:
-        print("Usage: python3 main.py <video1.mp4> <video2.mp4>")
+        print("Usage: python3 main.py <video1.mp4|.mov> <video2.mp4|.mov>")
         sys.exit(1)
 
     video1 = sys.argv[1]
     video2 = sys.argv[2]
 
     print("\nProcessing videos...")
-    csv1 = "angles_1.csv"
-    csv2 = "angles_2.csv"
+    # derive CSV filenames from input video basenames
+    csv1 = os.path.splitext(os.path.basename(video1))[0] + ".csv"
+    csv2 = os.path.splitext(os.path.basename(video2))[0] + ".csv"
+    # avoid name collision if both inputs share the same basename
+    if csv1 == csv2:
+        csv1 = os.path.splitext(os.path.basename(video1))[0] + "_1.csv"
+        csv2 = os.path.splitext(os.path.basename(video2))[0] + "_2.csv"
 
     process_video_to_angle_csv(video1, csv1)
     process_video_to_angle_csv(video2, csv2)
 
     print("Comparing angle data...")
     score = compare_angle_csvs(csv1, csv2)
-
     print(f"\nSimilarity Score: {score:.2f}/100\n")
+
+    # write numeric score to a results file derived from the input filename
+    base1 = os.path.splitext(os.path.basename(video1))[0]
+    parts = base1.split('-')
+    if len(parts) >= 2:
+        results_name = '-'.join(parts[:-1]) + '-Results.txt'
+    else:
+        results_name = base1 + '-Results.txt'
+
+    try:
+        with open(results_name, 'w') as rf:
+            rf.write(f"{score:.2f}\n")
+    except OSError:
+        # best-effort: ignore write failures but notify on stdout
+        print(f"Warning: could not write results to {results_name}")
 
 if __name__ == "__main__":
     main()

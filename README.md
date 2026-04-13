@@ -46,8 +46,31 @@ source venv/bin/activate
 
 ### **3. Install dependencies**
 
+You can install the provided pinned dependencies, or create a fresh environment and install the minimal set below.
+
+Option A — use the provided requirements file:
+
 ```bash
 pip install -r requirements.txt
+```
+
+Option B — create a fresh environment and install the minimal set manually:
+
+```bash
+pip install mediapipe opencv-python numpy
+```
+
+If you need to capture the exact environment you used, run:
+
+```bash
+# Generate an exact list of currently installed packages
+pip freeze > requirements.txt
+```
+
+Note: `ffmpeg` is required for converting iPhone `.MOV` files if OpenCV cannot read them directly; install it via Homebrew on macOS:
+
+```bash
+brew install ffmpeg
 ```
 
 ### **4. Run the Analyzer**
@@ -55,12 +78,12 @@ pip install -r requirements.txt
 Provide two video file paths as positional arguments:
 
 ```bash
-python3.11 main.py <video1.mp4> <video2.mp4>
+python3.11 main.py <video1.mp4|.mov> <video2.mp4|.mov>
 ```
 
 The script will:
 
-* process each MP4 with MediaPipe and write `angles_1.csv` and `angles_2.csv` to the working directory
+* process each MP4/MOV with MediaPipe and write `angles_1.csv` and `angles_2.csv` to the working directory
 * compare the angle data frame‑by‑frame
 * print a similarity score on a 0–100 scale
 
