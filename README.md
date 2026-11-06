@@ -6,6 +6,21 @@ Using **MediaPipe** for pose estimation and **NumPy** for kinematic analysis, th
 
 ---
 
+## 🥋 Why I Built This
+
+Third-degree black belt ($3^\text{rd}$ Dan) tests are notoriously grueling examinations, often pushing practitioners to their physical and mental limits over several hours. During my own $3^\text{rd}$ Dan test in October 2025, I noticed a striking pattern toward the very end of the examination: even highly skilled practitioners—my own training partners whom I know to be exceptional martial artists—began to experience a noticeable degradation in form, precision, and sharpness.
+
+When our Grand Master called out these slips, it raised a compelling question: *What causes talented martial artists to lose their edge under pressure?*
+
+On the drive home—while rehydrating and recovering from the test—it hit me. Fatigue. But that realization opened up a deeper set of technical questions:
+- **Quantifiable Impact:** Exactly how much does fatigue degrade performance metrics like form execution, speed, and balance?
+- **Biomechanical Drift:** Can we objectively and mathematically quantify this "form drift" over time?
+- **Real-Time Insight:** Can computer vision provide real-time feedback to help martial artists recognize when fatigue is compromising their technique before it leads to injury or poor execution?
+
+`tkd-drift-analyzer` was born from the desire to bridge traditional martial arts discipline with data-driven analysis, using computer vision to measure how stamina dictates execution.
+
+---
+
 ## 🔬 Research Objective
 
 In traditional Taekwondo training, it is hypothesized that even expert practitioners (2nd/3rd Dan) experience an **80–90% effort gap** during the final stages of a training session.
